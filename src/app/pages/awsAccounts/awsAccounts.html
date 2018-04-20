@@ -1,0 +1,83 @@
+<div class="row" ng-controller="awsAccountsCtrl">
+  <div class="row">
+    <div class="col-lg-3 col-md-12 col-sm-12">
+      <div
+         ba-panel
+         ba-panel-title="Prod AWS Accounts"
+         ba-panel-class="with-scroll">
+            <div class="row">
+              <div class="col-lg-12 col-md-12 col-sm-12 btn-group-vertical">
+                <button data-id="{{ account.accountNo }}" type="button" class="btn btn-primary" ng-click="selectCurrentAccount(account)" ng-repeat="account in awsAccounts">{{ account.name }}</button>
+              </div>
+            </div>
+      </div>
+      <div
+         ba-panel
+         ba-panel-title="{{ currentAccountNo }} Dynamo DB Tables"
+         ba-panel-class="with-scroll">
+        <div class="row">
+          <div class="col-lg-12 col-md-12 col-sm-12 btn-group-vertical">
+            <button type="button" class="btn btn-primary" ng-click="selectCurrentTable(table)" ng-repeat="table in currentAccount.ddbTables">{{ table.name }}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-9 col-md-12 col-sm-12">
+      <div
+         ba-panel
+         ba-panel-title="Key Attributes for {{ currentAccount.currentTable.name }}"
+         ba-panel-class="with-scroll">
+        <form class="row form-inline" ng-if="currentAccount.currentTable" ng-submit="queryTable($)">
+            <div class="form-group col-sm-3 col-xs-6" ng-if="currentAccount.currentTable.KeySchema.length > 0">
+              <input type="text"
+                     class="form-control"
+                     ng-model="currentAccount.currentTable.queryParams.hashKey"
+                     placeholder="{{ currentAccount.currentTable.KeySchema[0].AttributeName }} - HASHKEY">
+            </div>
+            <div class="form-group col-sm-3 col-xs-6" ng-if="currentAccount.currentTable.KeySchema.length > 1">
+              <input type="text"
+                     class="form-control"
+                     ng-model="currentAccount.currentTable.queryParams.rangeKey"
+                     placeholder="{{ currentAccount.currentTable.KeySchema[1].AttributeName }} - RANGEKEY">
+            </div>
+            <button type="submit" class="btn btn-primary">Query table</button>
+        </form>
+      </div>
+    </div>
+  
+    <div class="col-lg-3 col-md-12 col-sm-12">
+    </div>
+    <div class="col-lg-9 col-md-12 col-sm-12">
+      <div
+         ba-panel
+         ba-panel-title="Query Results"
+         ba-panel-class="with-scroll">
+        <div class="horizontal-scroll">
+          <table class="table" st-table="currentAccount.currentTable.queryResults" ng-if="currentAccount.currentTable.queryResults" >
+            <thead>
+              <tr class="sortable ">
+                <th st-sort="{{ header }}" ng-repeat="header in currentAccount.currentTable.headers">{{ header }}</th>
+              </tr>
+              <tr>
+                <th ng-repeat="header in currentAccount.currentTable.headers"><input st-search="{{ header }}" placeholder="Search {{ header }}" class="input-sm form-control search-input"
+                            type="search"/></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr ng-repeat="item in currentAccount.currentTable.queryResults">
+                <td ng-repeat="header in currentAccount.currentTable.headers">{{ item[header] }} </td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="6" class="text-center">
+                  <div st-pagination="" st-items-by-page="smartTablePageSize" st-displayed-pages="5"></div>
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
