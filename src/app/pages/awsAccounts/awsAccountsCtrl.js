@@ -85,9 +85,9 @@
         };
         
         function getKeyConditionExpression(hashKeyName, hashKeyValue, rangeKeyName, rangeKeyValue) {
-            var key_condition_expression = hashKeyName+" = :"+hashKeyName;
+            var key_condition_expression = "#hashkey = :"+slugify(hashKeyName);
             if(rangeKeyValue) {
-                key_condition_expression += " AND "+rangeKeyName+" = :" + rangeKeyName;
+                key_condition_expression += " AND #rangekey = :" + slugify(rangeKeyName);
             }
             return key_condition_expression;
         };
@@ -97,13 +97,15 @@
             $scope.currentAccount.currentTable.AttributeDefinitions.forEach(function(value, index, arr) {
                 var attributeName = value.AttributeName;
                 var attributeType = value.AttributeType;
+                var attributeKey = slugify(":"+attributeName)
                 if(angular.equals(attributeName, hashKeyName)) {
-                    expressionAttributeValues[":"+attributeName] = {};
-                    expressionAttributeValues[":"+attributeName][attributeType] =  hashKeyValue;
+
+                    expressionAttributeValues[attributeKey] = {};
+                    expressionAttributeValues[attributeKey][attributeType] =  hashKeyValue;
                 };
                 if(angular.equals(attributeName, rangeKeyName) && rangeKeyValue) {
-                    expressionAttributeValues[":"+attributeName] = {};
-                    expressionAttributeValues[":"+attributeName][attributeType] =  rangeKeyValue;
+                    expressionAttributeValues[attributeKey] = {};
+                    expressionAttributeValues[attributeKey][attributeType] =  rangeKeyValue;
                 };
                    
             });
@@ -111,10 +113,12 @@
             
         };
 
-        function getExpressionAttributeNames(hashKeyName, rangeKeyName) {
+        function getExpressionAttributeNames(hashKeyName, hashKeyValue, rangeKeyName, rangeKeyValue) {
             var expressionAttributeNames =  {};
-            expressionAttributeNames[slugify(hashKeyName)] = hashKeyName;
-            expressionAttributeNames[slugify(rangeKeyName)] =  rangeKeyName;
+            expressionAttributeNames["#hashkey"] = hashKeyName;
+            if(rangeKeyValue) {
+                expressionAttributeNames["#rangekeyName"] =  rangeKeyName;
+            }
             return expressionAttributeNames;
         };
         
@@ -184,7 +188,7 @@
                 params: {
                     'conditionExpression' : getKeyConditionExpression(hashkeyName, hashkeyValue, rangekeyName, rangekeyValue),
                     'expressionAttributeValues': getExpressionAttributeValues(hashkeyName, hashkeyValue, rangekeyName, rangekeyValue),
-                    //'expressionAttributeNames': getExpressionAttributeNames(hashkeyName, rangekeyName)
+                    'expressionAttributeNames': getExpressionAttributeNames(hashkeyName, hashkeyValue, rangekeyName, rangekeyValue)
                 }
             }).then(function success(response) {
                 console.log(response);
