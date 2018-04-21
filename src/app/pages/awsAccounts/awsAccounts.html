@@ -2,13 +2,35 @@
   <div class="row">
     <div class="col-lg-3 col-md-12 col-sm-12">
       <div
+         class="ng-cloak"
+         ba-panel
+         ba-panel-title="AWS Regions"
+         ba-panel-class="with-scroll">
+        <div class="form-group ">
+          <ui-select ng-model="region.selected"
+                     class="btn-group bootstrap-select form-control"
+                     on-select="selectAwsRegion($item, $model)"
+                     ng-disabled="false"
+                     append-to-body="true"
+                     search-enabled="true">
+            <ui-select-match placeholder="Choose a region">
+              {{$select.selected.name}}
+            </ui-select-match>
+            <ui-select-choices
+               repeat="region in awsRegions | filter: $select.search">
+              <span ng-bind-html="region.name | highlight: $select.search"></span>
+            </ui-select-choices>
+          </ui-select>
+        </div>
+      </div>
+      <div
          ba-panel
          ba-panel-title="Prod AWS Accounts"
          ba-panel-class="with-scroll">
-            <div class="row">
-              <div class="col-lg-12 col-md-12 col-sm-12 btn-group-vertical">
-                <button data-id="{{ account.accountNo }}" type="button" class="btn btn-primary" ng-click="selectCurrentAccount(account)" ng-repeat="account in awsAccounts">{{ account.name }}</button>
-              </div>
+        <div class="row">
+          <div class="col-lg-12 col-md-12 col-sm-12 btn-group-vertical">
+            <button data-id="{{ account.accountNo }}" type="button" class="btn btn-primary" ng-click="selectCurrentAccount(account)" ng-repeat="account in awsAccounts">{{ account.name }}</button>
+          </div>
             </div>
       </div>
       <div
@@ -17,28 +39,64 @@
          ba-panel-class="with-scroll">
         <div class="row">
           <div class="col-lg-12 col-md-12 col-sm-12 btn-group-vertical">
-            <button type="button" class="btn btn-primary" ng-click="selectCurrentTable(table)" ng-repeat="table in currentAccount.ddbTables">{{ table.name }}</button>
+            <button type="button" class="btn btn-primary" ng-click="selectCurrentTable(table)" ng-repeat="table in currentAccount[currentRegion.name].ddbTables">{{ table.name }}</button>
           </div>
         </div>
       </div>
     </div>
     <div class="col-lg-9 col-md-12 col-sm-12">
+      <div ba-panel
+           ba-panel-class="tabs-panel with-scroll">
+        <uib-tabset>
+          <uib-tab heading="Provisioned Throughput">
+            <div>
+              <ul>
+                <li ng-if="currentAccount[currentRegion.name].currentTable.ProvisionedThroughput.ReadCapacityUnits"> Read Capacity Units - {{ currentAccount[currentRegion.name].currentTable.ProvisionedThroughput.ReadCapacityUnits }}
+                <li ng-if="currentAccount[currentRegion.name].currentTable.ProvisionedThroughput.WriteCapacityUnits"> Write Capacity Units - {{ currentAccount[currentRegion.name].currentTable.ProvisionedThroughput.WriteCapacityUnits }}
+                <li ng-if="currentAccount[currentRegion.name].currentTable.ProvisionedThroughput.LastDecreaseDateTime"> Last Decrease Date Time - {{ currentAccount[currentRegion.name].currentTable.ProvisionedThroughput.LastDecreaseDateTime }}
+                <li ng-if="currentAccount[currentRegion.name].currentTable.ProvisionedThroughput.LastIncreaseDateTime"> Last Increase Date Time - {{ currentAccount[currentRegion.name].currentTable.ProvisionedThroughput.LastIncreaseDateTime }}
+                <li ng-if="currentAccount[currentRegion.name].currentTable.ProvisionedThroughput.NumberOfDecreasesToday"> Number Of Decreases Today - {{ currentAccount[currentRegion.name].currentTable.ProvisionedThroughput.NumberOfDecreasesToday }}
+              </ul>
+            </div>
+          </uib-tab>
+          <uib-tab heading="Streams Configuration">
+            <div>
+              <ul>
+                <li ng-if="currentAccount[currentRegion.name].currentTable.StreamSpecification.StreamEnabled"> Stream Enabled - {{ currentAccount[currentRegion.name].currentTable.StreamSpecification.StreamEnabled }}
+                <li ng-if="currentAccount[currentRegion.name].currentTable.StreamSpecification.StreamViewType"> Stream View Type - {{ currentAccount[currentRegion.name].currentTable.StreamSpecification.StreamViewType }}
+                <li ng-if="currentAccount[currentRegion.name].currentTable.LatestStreamArn"> Latest Stream Arn - {{ currentAccount[currentRegion.name].currentTable.LatestStreamArn }}
+                <li ng-if="currentAccount[currentRegion.name].currentTable.LatestStreamLabel"> Last Stream Label - {{ currentAccount[currentRegion.name].currentTable.LatestStreamLabel }}
+              </ul>
+            </div>
+          </uib-tab>
+          <uib-tab heading="Other information">
+            <div>
+              <ul>
+                <li ng-if="currentAccount[currentRegion.name].currentTable.ItemCount"> Item Count - {{ currentAccount[currentRegion.name].currentTable.ItemCount }}
+                <li ng-if="currentAccount[currentRegion.name].currentTable.TableStatus"> Table Status - {{ currentAccount[currentRegion.name].currentTable.TableStatus }}
+                <li ng-if="currentAccount[currentRegion.name].currentTable.TableArn"> Table Arn - {{ currentAccount[currentRegion.name].currentTable.TableArn }}
+                <li ng-if="currentAccount[currentRegion.name].currentTable.TableSizeBytes"> Table Size Bytes - {{ currentAccount[currentRegion.name].currentTable.TableSizeBytes }}
+              </ul>
+            </div>
+          </uib-tab>
+        </uib-tabset>
+      </div>
       <div
          ba-panel
-         ba-panel-title="Key Attributes for {{ currentAccount.currentTable.name }}"
+         ba-panel-title="Query parameters for {{ currentAccount[currentRegion.name].currentTable.name }}"
          ba-panel-class="with-scroll">
-        <form class="row form-inline" ng-if="currentAccount.currentTable" ng-submit="queryTable($)">
-            <div class="form-group col-sm-3 col-xs-6" ng-if="currentAccount.currentTable.KeySchema.length > 0">
+        <form class="row form-inline" ng-if="currentAccount[currentRegion.name].currentTable.KeySchema" ng-submit="queryTable($)">
+            <div class="form-group col-sm-3 col-xs-6" ng-if="currentAccount[currentRegion.name].currentTable.KeySchema.length > 0">
               <input type="text"
                      class="form-control"
-                     ng-model="currentAccount.currentTable.queryParams.hashKey"
-                     placeholder="{{ currentAccount.currentTable.KeySchema[0].AttributeName }} - HASHKEY">
+                     ng-model="currentAccount[currentRegion.name].currentTable.queryParams.hashKey"
+                     placeholder="{{ currentAccount[currentRegion.name].currentTable.KeySchema[0].AttributeName }} - HASHKEY">
             </div>
-            <div class="form-group col-sm-3 col-xs-6" ng-if="currentAccount.currentTable.KeySchema.length > 1">
+            <div class="form-group col-sm-3 col-xs-6" ng-if="currentAccount[currentRegion.name].currentTable.KeySchema.length > 1">
               <input type="text"
                      class="form-control"
-                     ng-model="currentAccount.currentTable.queryParams.rangeKey"
-                     placeholder="{{ currentAccount.currentTable.KeySchema[1].AttributeName }} - RANGEKEY">
+                     ng-model="currentAccount[currentRegion.name].currentTable.queryParams.rangeKey"
+                     placeholder="{{ currentAccount[currentRegion.name].currentTable.KeySchema[1].AttributeName }} - RANGEKEY">
             </div>
             <button type="submit" class="btn btn-primary">Query table</button>
         </form>
@@ -53,19 +111,19 @@
          ba-panel-title="Query Results"
          ba-panel-class="with-scroll">
         <div class="horizontal-scroll">
-          <table class="table" st-table="currentAccount.currentTable.queryResults" ng-if="currentAccount.currentTable.queryResults" >
+          <table class="table" st-table="currentAccount[currentRegion.name].currentTable.queryResults" ng-if="currentAccount[currentRegion.name].currentTable.queryResults" >
             <thead>
               <tr class="sortable ">
-                <th st-sort="{{ header }}" ng-repeat="header in currentAccount.currentTable.headers">{{ header }}</th>
+                <th st-sort="{{ header }}" ng-repeat="header in currentAccount[currentRegion.name].currentTable.headers">{{ header }}</th>
               </tr>
               <tr>
-                <th ng-repeat="header in currentAccount.currentTable.headers"><input st-search="{{ header }}" placeholder="Search {{ header }}" class="input-sm form-control search-input"
+                <th ng-repeat="header in currentAccount[currentRegion.name].currentTable.headers"><input st-search="{{ header }}" placeholder="Search {{ header }}" class="input-sm form-control search-input"
                             type="search"/></th>
               </tr>
             </thead>
             <tbody>
-              <tr ng-repeat="item in currentAccount.currentTable.queryResults">
-                <td ng-repeat="header in currentAccount.currentTable.headers">{{ item[header] }} </td>
+              <tr ng-repeat="item in currentAccount[currentRegion.name].currentTable.queryResults">
+                <td ng-repeat="header in currentAccount[currentRegion.name].currentTable.headers">{{ item[header] }} </td>
               </tr>
             </tbody>
             <tfoot>

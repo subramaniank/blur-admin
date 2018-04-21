@@ -12,10 +12,35 @@
     function awsAccountsCtrl($scope, $http, $timeout, $element) {
         console.log("AWS Accounts Ctrl initialized");
 
+        $scope.region = {};
+        $scope.awsRegions = [
+            {'name':'us-east-1', 'currentAccount': {}},
+            {'name':'us-east-2', 'currentAccount': {}},
+            {'name':'us-west-1', 'currentAccount': {}},
+            {'name':'us-west-2', 'currentAccount': {}},
+            {'name':'ap-northeast-1', 'currentAccount': {}},
+            {'name':'ap-northeast-2', 'currentAccount': {}},
+            {'name':'ap-northeast-3', 'currentAccount': {}},
+            {'name':'ap-south-1', 'currentAccount': {}},
+            {'name':'ap-southeast-1', 'currentAccount': {}},
+            {'name':'ap-southeast-2', 'currentAccount': {}},
+            {'name':'ca-central-1', 'currentAccount': {}},
+            {'name':'cn-north-1', 'currentAccount': {}},
+            {'name':'cn-northwest-1', 'currentAccount': {}},
+            {'name':'eu-central-1', 'currentAccount': {}},
+            {'name':'eu-west-1', 'currentAccount': {}},
+            {'name':'eu-west-2', 'currentAccount': {}},
+            {'name':'eu-west-3', 'currentAccount': {}},
+            {'name':'sa-east-1', 'currentAccount': {}}];
+        
+        $scope.region.selected = $scope.awsRegions[0];
+        $scope.currentRegion = $scope.region.selected; 
+
+
         $scope.awsAccounts = [];
         $scope.currentAccount = {};
-        $scope.currentAccount.currentTable = "";
-        $scope.dynamoDBTables = [];
+        $scope.currentAccount[$scope.currentRegion.name] = {};
+        $scope.currentAccount[$scope.currentRegion.name].currentTable = {};
 
         $scope.refreshAwsAccount = refreshAwsAccounts;
         $scope.refreshAwsAccount();
@@ -37,11 +62,11 @@
             });
         };
 
-        function refreshDynamoDBTables(awsAccountNo) {
-            if (!awsAccountNo) {
-                return [];
-            }
-            var url = "http://subkale.aka.corp.amazon.com:5000/awsAccounts/"+awsAccountNo+"/us-east-1/dynamoDBtables/";
+        function refreshDynamoDBTables() {
+            var region = $scope.currentRegion.name;
+            var awsAccountNo = $scope.currentAccount.accountNo;
+            $scope.currentAccount[region] = {};
+            var url = "http://subkale.aka.corp.amazon.com:5000/awsAccounts/"+awsAccountNo+"/"+region+"/dynamoDBtables/";
             var method = "GET";
             $http({
                 method: method,
@@ -49,17 +74,17 @@
             }).then(function success(response) {
                 console.log(response);
                 console.log(response.data);
-                $scope.currentAccount.ddbTables = response.data;
+                $scope.currentAccount[region].ddbTables = response.data;
             }, function error(response) {
                 console.log(response);
             });
         };
 
         function refreshTableInfo(accountNo, tableName) {
-            if (!accountNo || !tableName) {
-                return [];
-            }
-            var url = "http://subkale.aka.corp.amazon.com:5000/awsAccounts/"+accountNo+"/us-east-1/dynamoDBtables/"+tableName+"/";
+            var accountNo = $scope.currentAccount.accountNo;
+            var currentRegion = $scope.currentRegion;
+            var tableName = $scope.currentAccount[currentRegion.name].currentTable.name;
+            var url = "http://subkale.aka.corp.amazon.com:5000/awsAccounts/"+accountNo+"/"+$scope.region.selected.name+"/dynamoDBtables/"+tableName+"/";
             var method = "GET";
             $http({
                 method: method,
@@ -67,8 +92,18 @@
             }).then(function success(response) {
                 console.log(response);
                 console.log(response.data);
-                $scope.currentAccount.currentTable.KeySchema = response.data.KeySchema;
-                $scope.currentAccount.currentTable.AttributeDefinitions = response.data.AttributeDefinitions;
+                $scope.currentAccount[currentRegion.name].currentTable.KeySchema = response.data.KeySchema;
+                $scope.currentAccount[currentRegion.name].currentTable.AttributeDefinitions = response.data.AttributeDefinitions;
+                $scope.currentAccount[currentRegion.name].currentTable.ProvisionedThroughput = response.data.ProvisionedThroughput;
+                $scope.currentAccount[currentRegion.name].currentTable.StreamSpecification = response.data.StreamSpecification;
+                $scope.currentAccount[currentRegion.name].currentTable.LatestStreamArn = response.data.LatestStreamArn;
+                $scope.currentAccount[currentRegion.name].currentTable.LatestStreamLabel = response.data.LatestStreamLabel;
+
+                $scope.currentAccount[currentRegion.name].currentTable.ItemCount = response.data.ItemCount;
+                $scope.currentAccount[currentRegion.name].currentTable.TableStatus = response.data.TableStatus;
+                $scope.currentAccount[currentRegion.name].currentTable.TableArn = response.data.TableArn;
+                $scope.currentAccount[currentRegion.name].currentTable.TableSizeBytes = response.data.TableSizeBytes;
+                
             }, function error(response) {
                 console.log(response);
             });
@@ -94,7 +129,8 @@
 
         function getExpressionAttributeValues(hashKeyName, hashKeyValue, rangeKeyName, rangeKeyValue) {
             var expressionAttributeValues = {};
-            $scope.currentAccount.currentTable.AttributeDefinitions.forEach(function(value, index, arr) {
+            var currentRegionName = $scope.currentRegion.name;
+            $scope.currentAccount[currentRegionName].currentTable.AttributeDefinitions.forEach(function(value, index, arr) {
                 var attributeName = value.AttributeName;
                 var attributeType = value.AttributeType;
                 var attributeKey = slugify(":"+attributeName)
@@ -123,7 +159,8 @@
         };
         
         function transformDynamodbQueryResult(dynamodbQueryItem) {
-            var headers = $scope.currentAccount.currentTable.headers;
+            var currentRegionName = $scope.currentRegion.name;
+            var headers = $scope.currentAccount[currentRegionName].currentTable.headers;
             var newRecord = {};            
             headers.forEach(function(header, index, arr) {
                 if (dynamodbQueryItem.hasOwnProperty(header)){
@@ -138,49 +175,52 @@
         function getTableData(dynamodbquerydata) {
             var tableHeaders = []
             let set = new Set();
-            var queryResults = []
+            var queryResults = [];
+            var currentRegionName = $scope.currentRegion.name;
             dynamodbquerydata.Items.forEach(function(ddbRecord, ddbRecordindex, ddbRecordarr) {
                 Object.keys(ddbRecord).forEach(function(ddbRecordKey, ddbRecordKeyindex, ddbRecordKeyarr) {
                     set.add(ddbRecordKey);
-                    $scope.currentAccount.currentTable.headers = Array.from(set);
+                    $scope.currentAccount[currentRegionName].currentTable.headers = Array.from(set);
                 });
                 queryResults.push(transformDynamodbQueryResult(ddbRecord));
             });
-            $scope.currentAccount.currentTable.headers = Array.from(set);
-            $scope.currentAccount.currentTable.queryResults = queryResults;
-            console.log($scope.currentAccount.currentTable.headers);
-            console.log($scope.currentAccount.currentTable.queryResults);
+            $scope.currentAccount[currentRegionName].currentTable.headers = Array.from(set);
+            $scope.currentAccount[currentRegionName].currentTable.queryResults = queryResults;
         };
         
         $scope.selectCurrentAccount = function(account){
             $scope.currentAccount = account;
-            if (!$scope.currentAccount.ddbTables) {
-                refreshDynamoDBTables(account.accountNo);
+            var currentRegion = $scope.currentRegion;
+            if (!$scope.currentAccount[currentRegion]) {
+                $scope.currentAccount[currentRegion] = {}
+                refreshDynamoDBTables();
             }
         }
 
         $scope.selectCurrentTable = function(table){
-            $scope.currentAccount.currentTable = table;
-            if (!$scope.currentAccount.currentTable.KeySchema) {
-                refreshTableInfo($scope.currentAccount.accountNo, table.name);
+            var currentRegion = $scope.currentRegion;
+            $scope.currentAccount[currentRegion.name].currentTable = table;
+            if (!$scope.currentAccount[currentRegion.name].currentTable.KeySchema) {
+                refreshTableInfo($scope.region.selected.currentAccount.accountNo, table.name);
             }
         }
 
         $scope.queryTable = function() {
-            var hashkeyName = $scope.currentAccount.currentTable.KeySchema[0].AttributeName;
+            var currentRegionName = $scope.currentRegion.name;
+            var hashkeyName = $scope.currentAccount[currentRegionName].currentTable.KeySchema[0].AttributeName;
             var rangekeyName;
             var rangekeyValue;
-            if ($scope.currentAccount.currentTable.KeySchema.length > 1) {
-                var rangekeyName = $scope.currentAccount.currentTable.KeySchema[1].AttributeName;
-                var rangekeyValue = $scope.currentAccount.currentTable.queryParams.rangeKey;
+            if ($scope.currentAccount[currentRegionName].currentTable.KeySchema.length > 1) {
+                var rangekeyName = $scope.currentAccount[currentRegionName].currentTable.KeySchema[1].AttributeName;
+                var rangekeyValue = $scope.currentAccount[currentRegionName].currentTable.queryParams.rangeKey;
             }
 
-            var hashkeyValue = $scope.currentAccount.currentTable.queryParams.hashKey;
+            var hashkeyValue = $scope.currentAccount[currentRegionName].currentTable.queryParams.hashKey;
 
 
-            var tableName = $scope.currentAccount.currentTable.name;
+            var tableName = $scope.currentAccount[currentRegionName].currentTable.name;
             var accountNo = $scope.currentAccount.accountNo;
-            var url = "http://subkale.aka.corp.amazon.com:5000/awsAccounts/"+accountNo+"/us-east-1/dynamoDBtables/"+tableName+"/query";
+            var url = "http://subkale.aka.corp.amazon.com:5000/awsAccounts/"+accountNo+"/"+currentRegionName+"/dynamoDBtables/"+tableName+"/query";
             var method = "GET";
             $http({
                 method: method,
@@ -198,6 +238,19 @@
                 console.log(response);
             });
             
-        }
-    }
+        };
+
+        $scope.selectAwsRegion = function($item, $model) {
+            $scope.currentRegion = $item;
+            var currentRegion = $scope.currentRegion;
+            if ($scope.currentAccount) {
+                if (!$scope.currentAccount[currentRegion.name]) {
+                    $scope.currentAccount[currentRegion.name] = {}
+                    refreshDynamoDBTables();
+                }
+            }
+        };
+
+    };
+
 })();
