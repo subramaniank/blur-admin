@@ -7,7 +7,7 @@
 
   angular.module('BlurAdmin.pages', [
     'ui.router',
-    'BlurAdmin.pages.awsAccounts'
+    'BlurAdmin.pages.dynamodb'
     //'BlurAdmin.pages.dashboard',
     //'BlurAdmin.pages.ui',
     //'BlurAdmin.pages.components',
@@ -21,7 +21,7 @@
 
   /** @ngInject */
     function routeConfig($urlRouterProvider, baSidebarServiceProvider) {
-    $urlRouterProvider.otherwise('/dashboard');
+    $urlRouterProvider.otherwise('/dynamodb');
 
         // baSidebarServiceProvider.addStaticItem({
         //     title: 'Pages',

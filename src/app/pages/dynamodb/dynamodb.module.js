@@ -5,16 +5,16 @@
 (function () {
   'use strict';
 
-  angular.module('BlurAdmin.pages.awsAccounts', [])
+  angular.module('BlurAdmin.pages.dynamodb', [])
       .config(routeConfig);
 
   /** @ngInject */
   function routeConfig($stateProvider) {
     $stateProvider
         .state('dashboard', {
-          url: '/awsAccounts',
-          templateUrl: 'app/pages/awsAccounts/awsAccounts.html',
-          title: 'AWS Accounts',
+          url: '/dynamodb',
+          templateUrl: 'app/pages/dynamodb/dynamodb.html',
+          title: 'dynamodb',
           sidebarMeta: {
             icon: 'ion-android-home',
             order: 0,
