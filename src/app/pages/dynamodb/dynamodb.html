@@ -85,33 +85,51 @@
          ba-panel
          ba-panel-title="Query parameters for {{ currentAccount[currentRegion.name].currentTable.name }}"
          ba-panel-class="with-scroll">
-        <form class="row form-inline" ng-if="currentAccount[currentRegion.name].currentTable.KeySchema" ng-submit="queryTable($)">
-            <div class="form-group col-sm-3 col-xs-6" ng-if="currentAccount[currentRegion.name].currentTable.KeySchema.length > 0">
-              <input type="text"
-                     class="form-control"
-                     ng-model="currentAccount[currentRegion.name].currentTable.queryParams.hashKey"
-                     placeholder="{{ currentAccount[currentRegion.name].currentTable.KeySchema[0].AttributeName }} - HASHKEY">
-            </div>
-            <div class="form-group col-sm-3 col-xs-6" ng-if="currentAccount[currentRegion.name].currentTable.KeySchema.length > 1">
-              <input type="text"
-                     class="form-control"
-                     ng-model="currentAccount[currentRegion.name].currentTable.queryParams.rangeKey"
-                     placeholder="{{ currentAccount[currentRegion.name].currentTable.KeySchema[1].AttributeName }} - RANGEKEY">
-            </div>
-            <button type="submit" class="btn btn-primary">Query table</button>
-        </form>
+        <div class="row">
+          <div class="col-sm-12 col-md-12 col-xs-12" ng-if="currentAccount[currentRegion.name].currentTable.GlobalSecondaryIndexes">
+            <ui-select ng-model="currentIndex"
+                       class="form-group col-sm-6 col-xs-6 btn-group bootstrap-select form-control"
+                       on-select="selectCurrentIndex($item, $model)"
+                       ng-disabled="false"
+                       append-to-body="true"
+                       search-enabled="true">
+              <ui-select-match placeholder="Choose an Index Name">
+                {{$select.selected.IndexName}}
+              </ui-select-match>
+              <ui-select-choices
+                 repeat="index in currentAccount[currentRegion.name].currentTable.GlobalSecondaryIndexes | filter: $select.search">
+                <span ng-bind-html="index.IndexName | highlight: $select.search"></span>
+              </ui-select-choices>
+            </ui-select>
+          </div>
+          <div class="col-sm-12 col-md-12 col-xs-12" style="margin-top: 15px;">
+            <form ng-if="currentAccount[currentRegion.name].currentTable.KeySchema" ng-submit="queryTable($)">
+              <div class="form-group col-sm-3 col-xs-6" ng-if="currentAccount[currentRegion.name].currentTable.KeySchema.length > 0">
+                <input type="text"
+                       class="form-control"
+                       ng-model="currentAccount[currentRegion.name].currentTable.queryParams.hashKey"
+                       placeholder="{{ currentAccount[currentRegion.name].currentTable.KeySchema[0].AttributeName }} - HASHKEY">
+              </div>
+              <div class="form-group col-sm-3 col-xs-6" ng-if="currentAccount[currentRegion.name].currentTable.KeySchema.length > 1">
+                <input type="text"
+                       class="form-control"
+                       ng-model="currentAccount[currentRegion.name].currentTable.queryParams.rangeKey"
+                       placeholder="{{ currentAccount[currentRegion.name].currentTable.KeySchema[1].AttributeName }} - RANGEKEY">
+              </div>
+              <button type="submit" class="btn btn-primary">Query table</button>
+            </form>
+          </div>
+        </div>
       </div>
     </div>
   
-    <div class="col-lg-3 col-md-12 col-sm-12">
-    </div>
     <div class="col-lg-9 col-md-12 col-sm-12">
       <div
          ba-panel
          ba-panel-title="Query Results"
          ba-panel-class="with-scroll">
         <div class="horizontal-scroll">
-          <table class="table" st-table="currentAccount[currentRegion.name].currentTable.queryResults" ng-if="currentAccount[currentRegion.name].currentTable.queryResults" >
+          <table class="table" st-safe-src="currentAccount[currentRegion.name].currentTable.queryResults" st-table="queryResultsDisplay" ng-if="currentAccount[currentRegion.name].currentTable.queryResults" >
             <thead>
               <tr class="sortable ">
                 <th st-sort="{{ header }}" ng-repeat="header in currentAccount[currentRegion.name].currentTable.headers">{{ header }}</th>
@@ -122,7 +140,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr ng-repeat="item in currentAccount[currentRegion.name].currentTable.queryResults">
+              <tr ng-repeat="item in queryResultsDisplay">
                 <td ng-repeat="header in currentAccount[currentRegion.name].currentTable.headers">{{ item[header] }} </td>
               </tr>
             </tbody>

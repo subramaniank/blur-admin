@@ -9,7 +9,7 @@
     .controller('dynamodbCtrl', dynamodbCtrl);
 
   /** @ngInject */
-    function dynamodbCtrl($scope, $http, $timeout, $element) {
+    function dynamodbCtrl($scope, $http, $timeout, $element, toastr, toastrConfig) {
         console.log("AWS Accounts Ctrl initialized");
 
         $scope.region = {};
@@ -57,8 +57,40 @@
                 console.log(response);
                 console.log(response.data);
                 $scope.awsAccounts = response.data;
+                toastr.info('Refreshed AWS Accounts', 'Initialized', {
+                    "autoDismiss": false,
+                    "positionClass": "toast-top-full-width",
+                    "type": "success",
+                    "timeOut": "5000",
+                    "extendedTimeOut": "2000",
+                    "allowHtml": false,
+                    "closeButton": true,
+                    "tapToDismiss": true,
+                    "progressBar": true,
+                    "newestOnTop": true,
+                    "maxOpened": 0,
+                    "preventDuplicates": false,
+                    "preventOpenDuplicates": false
+                });
+
             }, function error(response) {
                 console.log(response);
+                toastr.info('Failed to get AWS accounts. Please do a hard refresh', 'Failed Initialization.', {
+                    "autoDismiss": false,
+                    "positionClass": "toast-top-full-width",
+                    "type": "error",
+                    "timeOut": "5000",
+                    "extendedTimeOut": "2000",
+                    "allowHtml": false,
+                    "closeButton": true,
+                    "tapToDismiss": true,
+                    "progressBar": true,
+                    "newestOnTop": true,
+                    "maxOpened": 0,
+                    "preventDuplicates": false,
+                    "preventOpenDuplicates": false
+                });
+
             });
         };
 
@@ -75,8 +107,38 @@
                 console.log(response);
                 console.log(response.data);
                 $scope.currentAccount[region].ddbTables = response.data;
+                toastr.info('Got DynamoDB Tables.', 'Initialized DynamoDB Tables', {
+                    "autoDismiss": false,
+                    "positionClass": "toast-top-full-width",
+                    "type": "error",
+                    "timeOut": "5000",
+                    "extendedTimeOut": "2000",
+                    "allowHtml": false,
+                    "closeButton": true,
+                    "tapToDismiss": true,
+                    "progressBar": true,
+                    "newestOnTop": true,
+                    "maxOpened": 0,
+                    "preventDuplicates": false,
+                    "preventOpenDuplicates": false
+                });
             }, function error(response) {
                 console.log(response);
+                toastr.info('Failed to get DynamoDB Tables. Please do a hard refresh', 'Failed Initialization.', {
+                    "autoDismiss": false,
+                    "positionClass": "toast-top-full-width",
+                    "type": "error",
+                    "timeOut": "5000",
+                    "extendedTimeOut": "2000",
+                    "allowHtml": false,
+                    "closeButton": true,
+                    "tapToDismiss": true,
+                    "progressBar": true,
+                    "newestOnTop": true,
+                    "maxOpened": 0,
+                    "preventDuplicates": false,
+                    "preventOpenDuplicates": false
+                });
             });
         };
 
@@ -93,6 +155,7 @@
                 console.log(response);
                 console.log(response.data);
                 $scope.currentAccount[currentRegion.name].currentTable.KeySchema = response.data.KeySchema;
+                $scope.currentAccount[currentRegion.name].currentTable.MainKeySchema = $scope.currentAccount[currentRegion.name].currentTable.KeySchema;
                 $scope.currentAccount[currentRegion.name].currentTable.AttributeDefinitions = response.data.AttributeDefinitions;
                 $scope.currentAccount[currentRegion.name].currentTable.ProvisionedThroughput = response.data.ProvisionedThroughput;
                 $scope.currentAccount[currentRegion.name].currentTable.StreamSpecification = response.data.StreamSpecification;
@@ -103,9 +166,46 @@
                 $scope.currentAccount[currentRegion.name].currentTable.TableStatus = response.data.TableStatus;
                 $scope.currentAccount[currentRegion.name].currentTable.TableArn = response.data.TableArn;
                 $scope.currentAccount[currentRegion.name].currentTable.TableSizeBytes = response.data.TableSizeBytes;
+
+                $scope.currentAccount[currentRegion.name].currentTable.GlobalSecondaryIndexes = response.data.GlobalSecondaryIndexes;
+                if ($scope.currentAccount[currentRegion.name].currentTable.GlobalSecondaryIndexes) {
+                    // add empty index
+                    $scope.currentAccount[currentRegion.name].currentTable.GlobalSecondaryIndexes.push({'IndexName': 'No Index'});
+                }
+                toastr.info('Got table information for '+tableName, 'Got dynamodb table Info', {
+                    "autoDismiss": false,
+                    "positionClass": "toast-top-full-width",
+                    "type": "success",
+                    "timeOut": "5000",
+                    "extendedTimeOut": "2000",
+                    "allowHtml": false,
+                    "closeButton": true,
+                    "tapToDismiss": true,
+                    "progressBar": true,
+                    "newestOnTop": true,
+                    "maxOpened": 0,
+                    "preventDuplicates": false,
+                    "preventOpenDuplicates": false
+                });
                 
             }, function error(response) {
                 console.log(response);
+                toastr.info('Failed to fetch table information for ' + tableName, 'Failed To Get Table Info', {
+                    "autoDismiss": false,
+                    "positionClass": "toast-top-full-width",
+                    "type": "error",
+                    "timeOut": "5000",
+                    "extendedTimeOut": "2000",
+                    "allowHtml": false,
+                    "closeButton": true,
+                    "tapToDismiss": true,
+                    "progressBar": true,
+                    "newestOnTop": true,
+                    "maxOpened": 0,
+                    "preventDuplicates": false,
+                    "preventOpenDuplicates": false
+                });
+                
             });
         };
 
@@ -153,7 +253,7 @@
             var expressionAttributeNames =  {};
             expressionAttributeNames["#hashkey"] = hashKeyName;
             if(rangeKeyValue) {
-                expressionAttributeNames["#rangekeyName"] =  rangeKeyName;
+                expressionAttributeNames["#rangekey"] =  rangeKeyName;
             }
             return expressionAttributeNames;
         };
@@ -200,6 +300,7 @@
         $scope.selectCurrentTable = function(table){
             var currentRegion = $scope.currentRegion;
             $scope.currentAccount[currentRegion.name].currentTable = table;
+            $scope.currentIndex = {'IndexName': 'No Index'};
             if (!$scope.currentAccount[currentRegion.name].currentTable.KeySchema) {
                 refreshTableInfo($scope.region.selected.currentAccount.accountNo, table.name);
             }
@@ -222,20 +323,53 @@
             var accountNo = $scope.currentAccount.accountNo;
             var url = "https://subkale.aka.corp.amazon.com:5000/awsAccounts/"+accountNo+"/"+currentRegionName+"/dynamoDBtables/"+tableName+"/query";
             var method = "GET";
+            var params = {
+                    'conditionExpression' : getKeyConditionExpression(hashkeyName, hashkeyValue, rangekeyName, rangekeyValue),
+                    'expressionAttributeValues': getExpressionAttributeValues(hashkeyName, hashkeyValue, rangekeyName, rangekeyValue),
+                    'expressionAttributeNames': getExpressionAttributeNames(hashkeyName, hashkeyValue, rangekeyName, rangekeyValue),
+            };
+            if ($scope.currentIndex && $scope.currentIndex.IndexName != 'No Index') {
+                params['indexName'] = $scope.currentIndex.IndexName;
+            }
             $http({
                 method: method,
                 url: url,
-                params: {
-                    'conditionExpression' : getKeyConditionExpression(hashkeyName, hashkeyValue, rangekeyName, rangekeyValue),
-                    'expressionAttributeValues': getExpressionAttributeValues(hashkeyName, hashkeyValue, rangekeyName, rangekeyValue),
-                    'expressionAttributeNames': getExpressionAttributeNames(hashkeyName, hashkeyValue, rangekeyName, rangekeyValue)
-                }
+                params: params
             }).then(function success(response) {
                 console.log(response);
                 console.log(response.data);
                 getTableData(response.data);
+                toastr.info('Got Query Results', 'Query Results success', {
+                    "autoDismiss": false,
+                    "positionClass": "toast-top-full-width",
+                    "type": "success",
+                    "timeOut": "5000",
+                    "extendedTimeOut": "2000",
+                    "allowHtml": false,
+                    "closeButton": true,
+                    "tapToDismiss": true,
+                    "progressBar": true,
+                    "newestOnTop": true,
+                    "maxOpened": 0,
+                    "preventDuplicates": false,
+                    "preventOpenDuplicates": false
+                });
             }, function error(response) {
-                console.log(response);
+                toastr.info('Query Failure', 'Query Failure', {
+                    "autoDismiss": false,
+                    "positionClass": "toast-top-full-width",
+                    "type": "error",
+                    "timeOut": "5000",
+                    "extendedTimeOut": "2000",
+                    "allowHtml": false,
+                    "closeButton": true,
+                    "tapToDismiss": true,
+                    "progressBar": true,
+                    "newestOnTop": true,
+                    "maxOpened": 0,
+                    "preventDuplicates": false,
+                    "preventOpenDuplicates": false
+                });
             });
             
         };
@@ -250,6 +384,17 @@
                 }
             }
         };
+
+        $scope.selectCurrentIndex = function($item, $model) {
+            $scope.currentIndex = $item;
+            var currentRegionName = $scope.currentRegion.name;
+            if ($item.IndexName == 'No Index') {
+                $scope.currentAccount[currentRegionName].currentTable.KeySchema = $scope.currentAccount[currentRegionName].currentTable.MainKeySchema;
+            } else {
+                $scope.currentAccount[currentRegionName].currentTable.KeySchema = $item.KeySchema;
+            }
+
+        }
 
     };
 
