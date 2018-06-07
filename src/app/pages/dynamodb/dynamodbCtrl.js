@@ -306,6 +306,61 @@
             }
         }
 
+        $scope.scanTable = function() {
+            var currentRegionName = $scope.currentRegion.name;
+            var tableName = $scope.currentAccount[currentRegionName].currentTable.name;
+            var accountNo = $scope.currentAccount.accountNo;
+            var url = "http://subkale.aka.corp.amazon.com:5000/awsAccounts/"+accountNo+"/"+currentRegionName+"/dynamoDBtables/"+tableName+"/scan";
+            var method = "GET";
+            var params = {};
+            if ($scope.currentIndex && $scope.currentIndex.IndexName != 'No Index') {
+                params['indexName'] = $scope.currentIndex.IndexName;
+            }
+            $http({
+                method: method,
+                url: url,
+                params: params
+            }).then(function success(response) {
+                console.log(response);
+                console.log(response.data);
+                getTableData(response.data);
+                toastr.info('Got Scan Results', 'Scan Results success', {
+                    "autoDismiss": false,
+                    "positionClass": "toast-top-full-width",
+                    "type": "success",
+                    "timeOut": "5000",
+                    "extendedTimeOut": "2000",
+                    "allowHtml": false,
+                    "closeButton": true,
+                    "tapToDismiss": true,
+                    "progressBar": true,
+                    "newestOnTop": true,
+                    "maxOpened": 0,
+                    "preventDuplicates": false,
+                    "preventOpenDuplicates": false
+                });
+            }, function error(response) {
+                toastr.info('Scan Failure', 'Scan Failure', {
+                    "autoDismiss": false,
+                    "positionClass": "toast-top-full-width",
+                    "type": "error",
+                    "timeOut": "5000",
+                    "extendedTimeOut": "2000",
+                    "allowHtml": false,
+                    "closeButton": true,
+                    "tapToDismiss": true,
+                    "progressBar": true,
+                    "newestOnTop": true,
+                    "maxOpened": 0,
+                    "preventDuplicates": false,
+                    "preventOpenDuplicates": false
+                });
+            });
+
+            
+
+        };
+        
         $scope.queryTable = function() {
             var currentRegionName = $scope.currentRegion.name;
             var hashkeyName = $scope.currentAccount[currentRegionName].currentTable.KeySchema[0].AttributeName;
