@@ -12,6 +12,7 @@
     function dynamodbCtrl($scope, $http, $timeout, $element, toastr, toastrConfig) {
         console.log("AWS Accounts Ctrl initialized");
 
+        $scope.backendEndpoint = "http://subkale.aka.corp.amazon.com:5000";
         $scope.region = {};
         $scope.awsRegions = [
             {'name':'us-east-1', 'currentAccount': {}},
@@ -48,7 +49,7 @@
         $scope.refreshDynamoDBTables = refreshDynamoDBTables;
         
         function refreshAwsAccounts() {
-            var url = "http://subkale.aka.corp.amazon.com:5000/awsAccounts";
+            var url = $scope.backendEndpoint + "/awsAccounts";
             var method = "GET";
             $http({
                 method: method,
@@ -98,7 +99,7 @@
             var region = $scope.currentRegion.name;
             var awsAccountNo = $scope.currentAccount.accountNo;
             $scope.currentAccount[region] = {};
-            var url = "http://subkale.aka.corp.amazon.com:5000/awsAccounts/"+awsAccountNo+"/"+region+"/dynamoDBtables/";
+            var url = $scope.backendEndpoint + "/awsAccounts/"+awsAccountNo+"/"+region+"/dynamoDBtables/";
             var method = "GET";
             $http({
                 method: method,
@@ -146,7 +147,7 @@
             var accountNo = $scope.currentAccount.accountNo;
             var currentRegion = $scope.currentRegion;
             var tableName = $scope.currentAccount[currentRegion.name].currentTable.name;
-            var url = "http://subkale.aka.corp.amazon.com:5000/awsAccounts/"+accountNo+"/"+$scope.region.selected.name+"/dynamoDBtables/"+tableName+"/";
+            var url = $scope.backendEndpoint + "/awsAccounts/"+accountNo+"/"+$scope.region.selected.name+"/dynamoDBtables/"+tableName+"/";
             var method = "GET";
             $http({
                 method: method,
@@ -310,7 +311,7 @@
             var currentRegionName = $scope.currentRegion.name;
             var tableName = $scope.currentAccount[currentRegionName].currentTable.name;
             var accountNo = $scope.currentAccount.accountNo;
-            var url = "http://subkale.aka.corp.amazon.com:5000/awsAccounts/"+accountNo+"/"+currentRegionName+"/dynamoDBtables/"+tableName+"/scan";
+            var url = $scope.backendEndpoint + "/awsAccounts/"+accountNo+"/"+currentRegionName+"/dynamoDBtables/"+tableName+"/scan";
             var method = "GET";
             var params = {};
             if ($scope.currentIndex && $scope.currentIndex.IndexName != 'No Index') {
@@ -376,7 +377,7 @@
 
             var tableName = $scope.currentAccount[currentRegionName].currentTable.name;
             var accountNo = $scope.currentAccount.accountNo;
-            var url = "http://subkale.aka.corp.amazon.com:5000/awsAccounts/"+accountNo+"/"+currentRegionName+"/dynamoDBtables/"+tableName+"/query";
+            var url = $scope.backendEndpoint + "/awsAccounts/"+accountNo+"/"+currentRegionName+"/dynamoDBtables/"+tableName+"/query";
             var method = "GET";
             var params = {
                     'conditionExpression' : getKeyConditionExpression(hashkeyName, hashkeyValue, rangekeyName, rangekeyValue),
